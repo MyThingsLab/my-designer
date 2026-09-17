@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyThingsLab — Goal Cockpit & Orchestration Queue</title>
+<style>
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+  --bg-page: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #F1F5F9;
+  --bg-surface-elevated: #FFFFFF;
+  --border-subtle: #E2E8F0;
+  --border-strong: #CBD5E1;
+
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+
+  --accent-primary: #0D9488;
+  --accent-surface: #F0FDFA;
+  --accent-border: #99F6E4;
+  --accent-text: #0F766E;
+
+  --success-bg: #ECFDF5;
+  --success-border: #A7F3D0;
+  --success-text: #059669;
+  --success-solid: #10B981;
+
+  --warning-bg: #FFFBEB;
+  --warning-border: #FDE68A;
+  --warning-text: #D97706;
+  --warning-solid: #F59E0B;
+
+  --danger-bg: #FEF2F2;
+  --danger-border: #FECACA;
+  --danger-text: #DC2626;
+  --danger-solid: #EF4444;
+
+  --info-bg: #EFF6FF;
+  --info-border: #BFDBFE;
+  --info-text: #2563EB;
+  --info-solid: #3B82F6;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-page: #0B0F17;
+    --bg-surface: #131B26;
+    --bg-surface-subtle: #1C2636;
+    --bg-surface-elevated: #222F42;
+    --border-subtle: #243042;
+    --border-strong: #334155;
+
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+
+    --accent-primary: #14B8A6;
+    --accent-surface: #042F2E;
+    --accent-border: #115E59;
+    --accent-text: #5EEAD4;
+
+    --success-bg: #064E3B;
+    --success-border: #047857;
+    --success-text: #6EE7B7;
+    --success-solid: #10B981;
+
+    --warning-bg: #451A03;
+    --warning-border: #78350F;
+    --warning-text: #FCD34D;
+    --warning-solid: #F59E0B;
+
+    --danger-bg: #450A0A;
+    --danger-border: #7F1D1D;
+    --danger-text: #FCA5A5;
+    --danger-solid: #EF4444;
+
+    --info-bg: #172554;
+    --info-border: #1E40AF;
+    --info-text: #93C5FD;
+    --info-solid: #3B82F6;
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: var(--font-mono); }
+
+.container {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 1.25rem 2rem 4rem;
+}
+
+/* Top Header */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 1.25rem;
+}
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+.brand-badge {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--accent-primary), #0284C7);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFF;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.goal-selector {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+/* Primary Goal Hero Banner (Single Goal Enforced) */
+.goal-hero-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+.goal-meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-text);
+  background: var(--accent-surface);
+  border: 1px solid var(--accent-border);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.6rem;
+}
+.goal-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+.goal-statement {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 1rem;
+}
+.done-when-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.done-when-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+.done-when-item.checked {
+  color: var(--success-text);
+  font-weight: 600;
+}
+
+.goal-progress-box {
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.progress-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.progress-num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+.progress-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: var(--border-subtle);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  width: 75%;
+  background: linear-gradient(90deg, var(--accent-primary), var(--success-solid));
+  border-radius: var(--radius-full);
+}
+.goal-repo-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.repo-part-pill {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+/* Deterministic LLM Dispatch Queue */
+.queue-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+  box-shadow: var(--shadow-sm);
+}
+.queue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+.pipeline-belt {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.85rem;
+  position: relative;
+}
+.belt-stage {
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 190px;
+}
+.belt-stage.active-stage {
+  border-color: var(--accent-primary);
+  background: linear-gradient(to bottom, var(--accent-surface), var(--bg-surface-subtle));
+}
+.stage-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.stage-count {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  background: var(--bg-surface);
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-full);
+}
+
+/* Task Cards inside Queue */
+.queue-task-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.queue-task-card:hover {
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.task-badge-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.agent-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-text);
+  background: var(--accent-surface);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+}
+.prio-pill {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+/* 5-Column Synchronized Orchestration Board */
+.sync-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+.sync-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.col-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.45rem;
+  border-bottom: 2px solid var(--border-subtle);
+}
+.col-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.col-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.col-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.sync-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.95rem 1rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sync-card:hover {
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-md);
+}
+.sync-card-title {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+.blocker-alert {
+  font-size: 0.74rem;
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Context Pack Inspector Drawer */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.drawer-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.drawer-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 600px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+  z-index: 101;
+  transform: translateX(100%);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+.drawer-backdrop.open .drawer-panel {
+  transform: translateX(0);
+}
+.drawer-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.drawer-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+.context-pack-box {
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  color: var(--text-secondary);
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-primary { background: var(--accent-primary); color: #FFF; }
+.btn-primary:hover { filter: brightness(1.1); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Top Navigation & Goal Focus Switcher -->
+  <header class="top-header">
+    <div class="brand-group">
+      <div class="brand-badge">M</div>
+      <div>
+        <h1 style="font-size: 1.15rem; font-weight: 700;">MyThingsLab Operative Cockpit</h1>
+        <p style="font-size: 0.78rem; color: var(--text-muted);">Synchronized Multi-Agent Goal Execution Surface</p>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <label class="mono" style="font-size: 0.8rem; color: var(--text-muted);">ACTIVE GOAL FOCUS:</label>
+      <select class="goal-selector" onchange="alert('Switching active goal focus to: ' + this.value)">
+        <option selected>goal/cad-foundation (4 repos · 75% complete)</option>
+        <option>goal/study-physics (2 repos · 40% complete)</option>
+        <option>goal/live-serve-ask (2 repos · 90% complete)</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- Enforced Single Goal Hero Surface -->
+  <section class="goal-hero-card">
+    <div>
+      <div class="goal-meta-tag">● ACTIVE CROSS-REPO GOAL MILESTONE</div>
+      <h2 class="goal-title">goal/cad-foundation</h2>
+      <p class="goal-statement">
+        Establish the unified continuous autonomous development loop: deterministic dependency parsing across all org repos, non-blocking live dashboard server, and in-page human-in-the-loop decision gating.
+      </p>
+
+      <div style="margin-top: 1rem;">
+        <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem;">
+          Done-When Verifiable Criteria
+        </div>
+        <ul class="done-when-list">
+          <li class="done-when-item checked">✓ 1. Dependency graph parses <code>blocked_by:</code> and <code>depends on</code> across org repos.</li>
+          <li class="done-when-item checked">✓ 2. <code>mydashboard serve</code> HTTP server runs non-blocking background sweep with 127.0.0.1 default.</li>
+          <li class="done-when-item checked">✓ 3. <code>my-designer</code> produces unified high-signal Operative Cockpit prototype.</li>
+          <li class="done-when-item">○ 4. Full ASK Allow/Deny round-trip verified between live server and <code>myguard.ask</code>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="goal-progress-box">
+      <div class="progress-head">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);">Milestone Completion</span>
+        <span class="progress-num">12 / 16 <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted);">Issues</span></span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill"></div>
+      </div>
+      <div>
+        <div style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem;">
+          Involved Repositories (4)
+        </div>
+        <div class="goal-repo-pills">
+          <span class="repo-part-pill">my-things-core (4/5)</span>
+          <span class="repo-part-pill">my-dashboard (4/5)</span>
+          <span class="repo-part-pill">my-designer (2/3)</span>
+          <span class="repo-part-pill">my-guard (2/3)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Deterministic LLM Access & Execution Queue -->
+  <section class="queue-section">
+    <div class="queue-header">
+      <div>
+        <h3 style="font-size: 1.05rem; font-weight: 700;">Deterministic LLM Dispatch & Execution Queue</h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">
+          Pre-optimizing task context deterministically before token dispatch · Rate-paced spend protection
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <span class="mono" style="font-size: 0.76rem; color: var(--accent-text); background: var(--accent-surface); padding: 0.2rem 0.5rem; border-radius: 4px;">
+          SPEND: $1.48 / $5.00 CAP
+        </span>
+        <button class="btn btn-primary" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;" onclick="alert('Triggering next queue cycle...')">Step Dispatch</button>
+      </div>
+    </div>
+
+    <div class="pipeline-belt">
+      <!-- Stage 1: Context Assembly (Deterministic) -->
+      <div class="belt-stage">
+        <div class="stage-title">1. Context Prep <span class="stage-count">2</span></div>
+        <div class="queue-task-card" onclick="openContextDrawer('my-things-core#105', 'my-guide', 'AST introspection & contract verification')">
+          <div class="task-badge-row">
+            <span class="agent-badge">my-guide</span>
+            <span class="prio-pill">P0</span>
+          </div>
+          <div class="mono" style="font-weight: 600; font-size: 0.78rem;">core#105: Context pack</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">Gathering ASTs & seam signatures</div>
+        </div>
+      </div>
+
+      <!-- Stage 2: Queued for LLM Access -->
+      <div class="belt-stage active-stage">
+        <div class="stage-title" style="color: var(--accent-text);">2. LLM Queue <span class="stage-count">1</span></div>
+        <div class="queue-task-card" style="border-color: var(--accent-primary);" onclick="openContextDrawer('my-dashboard#17', 'my-coder', 'Implement ASK in-page server handler')">
+          <div class="task-badge-row">
+            <span class="agent-badge">my-coder</span>
+            <span class="prio-pill" style="background: var(--warning-bg); color: var(--warning-text);">P1</span>
+          </div>
+          <div class="mono" style="font-weight: 600; font-size: 0.78rem;">dashboard#17: ASK flow</div>
+          <div style="font-size: 0.72rem; color: var(--accent-text);">Ready · Est. 1.2k tokens</div>
+        </div>
+      </div>
+
+      <!-- Stage 3: Active Inference -->
+      <div class="belt-stage">
+        <div class="stage-title">3. Inference <span class="stage-count">1</span></div>
+        <div class="queue-task-card" style="border-left: 3px solid var(--info-solid);" onclick="openContextDrawer('my-researcher#29', 'my-researcher', 'Physics study brief generation')">
+          <div class="task-badge-row">
+            <span class="agent-badge" style="background: var(--info-bg); color: var(--info-text);">my-researcher</span>
+            <span class="mono" style="font-size: 0.68rem; color: var(--info-text);">STREAMING</span>
+          </div>
+          <div class="mono" style="font-weight: 600; font-size: 0.78rem;">study#29: Briefing</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">Token step: 840/1200</div>
+        </div>
+      </div>
+
+      <!-- Stage 4: Policy & ASK Gate -->
+      <div class="belt-stage">
+        <div class="stage-title">4. Policy Gate <span class="stage-count">1</span></div>
+        <div class="queue-task-card" style="border-left: 3px solid var(--warning-solid);" onclick="openContextDrawer('my-guard#12', 'my-guard', 'Policy gate check on git push')">
+          <div class="task-badge-row">
+            <span class="agent-badge">my-guard</span>
+            <span class="prio-pill" style="background: var(--warning-bg); color: var(--warning-text);">ASK</span>
+          </div>
+          <div class="mono" style="font-weight: 600; font-size: 0.78rem;">guard#12: Gate eval</div>
+          <div style="font-size: 0.72rem; color: var(--warning-text);">Waiting for operator action</div>
+        </div>
+      </div>
+
+      <!-- Stage 5: Worktree & Verification -->
+      <div class="belt-stage">
+        <div class="stage-title">5. Verify & Draft <span class="stage-count">1</span></div>
+        <div class="queue-task-card" style="border-left: 3px solid var(--success-solid);" onclick="openContextDrawer('my-designer#7', 'my-designer', 'PR draft creation & pytest')">
+          <div class="task-badge-row">
+            <span class="agent-badge">my-designer</span>
+            <span class="mono" style="font-size: 0.68rem; color: var(--success-text);">18/18 PASS</span>
+          </div>
+          <div class="mono" style="font-weight: 600; font-size: 0.78rem;">designer#7: Mockup PR</div>
+          <div style="font-size: 0.72rem; color: var(--success-text);">Draft PR ready</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Synchronized 4-Column Board (Plans, Issues, Active Workloads, PRs) -->
+  <section class="sync-board">
+    <!-- Col 1: Open Plans -->
+    <div class="sync-column">
+      <div class="col-header">
+        <h4 class="col-title">Open Plans (my-planner)</h4>
+        <span class="col-count">2 Active</span>
+      </div>
+      <div class="col-card-list">
+        <div class="sync-card" onclick="openContextDrawer('Plan: CAD Foundation Phase 2', 'my-planner', 'Synchronize goals with dependency graph')">
+          <div class="mono" style="font-size: 0.72rem; color: var(--text-muted);">PLAN #14 · CAD HORIZON</div>
+          <div class="sync-card-title">Live Operative Serve & Dependency Graph</div>
+          <div style="font-size: 0.75rem; color: var(--text-secondary);">4/4 steps declared · 3 ready</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Col 2: Open Issues by Priority -->
+    <div class="sync-column">
+      <div class="col-header">
+        <h4 class="col-title">Open Issues & Blockers</h4>
+        <span class="col-count">4 Tasks</span>
+      </div>
+      <div class="col-card-list">
+        <div class="sync-card" onclick="openContextDrawer('my-things-core#105', 'my-guide', 'Engine context contract verification')">
+          <div style="display: flex; justify-content: space-between;">
+            <span class="mono" style="font-size: 0.74rem; font-weight: 700;">my-things-core#105</span>
+            <span class="prio-pill">P0</span>
+          </div>
+          <div class="sync-card-title">Engine context contract: transmit or rename; contract-test the boundary</div>
+          <div class="mono" style="font-size: 0.72rem; color: var(--success-text);">● READY (Unblocked)</div>
+        </div>
+
+        <div class="sync-card" onclick="openContextDrawer('my-dashboard#8', 'my-dashboard', 'Waiting on my-pipeline#4')">
+          <div style="display: flex; justify-content: space-between;">
+            <span class="mono" style="font-size: 0.74rem; font-weight: 700;">my-dashboard#8</span>
+            <span class="prio-pill" style="background: var(--warning-bg); color: var(--warning-text);">P1</span>
+          </div>
+          <div class="sync-card-title">Operative Dashboard Live Serve & ASK Endpoint</div>
+          <div class="blocker-alert">⚠️ Blocked on my-pipeline#4</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Col 3: Orchestrated Agents -->
+    <div class="sync-column">
+      <div class="col-header">
+        <h4 class="col-title">Orchestrated Agents</h4>
+        <span class="col-count">3 In-Flight</span>
+      </div>
+      <div class="col-card-list">
+        <div class="sync-card" onclick="openContextDrawer('my-coder (Active on core#105)', 'my-coder', 'Running AST inspection with context pack')">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="agent-badge">my-coder</span>
+            <span class="mono" style="font-size: 0.7rem; color: var(--accent-text);">ITERATION #3</span>
+          </div>
+          <div class="sync-card-title">Refactoring EngineRequest schema in mythings-core</div>
+          <div style="font-size: 0.74rem; color: var(--text-secondary);">Context: 4 files, 1 goal milestone</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Col 4: Open PRs & Gated Merges -->
+    <div class="sync-column">
+      <div class="col-header">
+        <h4 class="col-title">Open PRs & Review Gates</h4>
+        <span class="col-count">2 Pending</span>
+      </div>
+      <div class="col-card-list">
+        <div class="sync-card" onclick="openContextDrawer('my-designer#7', 'my-designer', 'Operative fleet cockpit prototype')">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="mono" style="font-weight: 700; font-size: 0.74rem;">my-designer#7</span>
+            <span class="mono" style="font-size: 0.7rem; color: var(--success-text);">CI GREEN</span>
+          </div>
+          <div class="sync-card-title">feat(mockup): add operative fleet cockpit prototype</div>
+          <div style="font-size: 0.74rem; color: var(--text-secondary);">Draft · Ready for review</div>
+        </div>
+
+        <div class="sync-card" onclick="openContextDrawer('my-dashboard#17', 'my-dashboard', 'Live serve and dependency graph')">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="mono" style="font-weight: 700; font-size: 0.74rem;">my-dashboard#17</span>
+            <span class="mono" style="font-size: 0.7rem; color: var(--info-text);">107 TESTS PASS</span>
+          </div>
+          <div class="sync-card-title">serve: a live, interactive operative graph + ASK panel</div>
+          <div style="font-size: 0.74rem; color: var(--text-secondary);">Waiting on core#205 pin</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Accurate Context Pack Inspector Drawer -->
+<div class="drawer-backdrop" id="context-drawer-backdrop" onclick="closeContextDrawer(event)">
+  <aside class="drawer-panel" onclick="event.stopPropagation()">
+    <div class="drawer-header">
+      <div>
+        <h3 id="context-title" style="font-size: 1.1rem; font-weight: 700; font-family: var(--font-mono);">Context Pack</h3>
+        <p id="context-agent" style="font-size: 0.78rem; color: var(--accent-text);">Agent: my-coder</p>
+      </div>
+      <button style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted);" onclick="closeContextDrawer()">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <div>
+        <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">
+          Task Description & Goal Linkage
+        </div>
+        <p id="context-desc" style="font-size: 0.85rem; color: var(--text-secondary);">
+          Engine context contract verification and AST parameter checks.
+        </p>
+      </div>
+
+      <div>
+        <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">
+          Deterministic Assembled Context Pack
+        </div>
+        <div class="context-pack-box">
+[GOAL CONSTRAINTS]
+- Goal Milestone: goal/cad-foundation
+- Required Gate: 100% test coverage with pytest_plugins
+
+[TARGET REPO & WORKTREE]
+- Repo: MyThingsLab/my-things-core
+- Branch: mycoder/engine-context-105
+- Target Files:
+  * src/mythings/engine.py (lines 14-48)
+  * src/mythings/deps.py (lines 1-82)
+  * tests/test_engine.py
+
+[SEAM SIGNATURE]
+- Tool: myguide
+- Single-Engine Prompt: "Verify AST signatures for wish() context parameter"
+- Deterministic Prework: 0 tokens spent (local ast.parse complete)
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">
+          Actions
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-primary" style="font-size: 0.8rem;" onclick="alert('Dispatching optimized context to agent engine...')">Dispatch to LLM Stream</button>
+          <button class="btn" style="background: var(--bg-surface-subtle); border-color: var(--border-subtle); font-size: 0.8rem;" onclick="alert('Viewing worktree diff...')">View Worktree Diff</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+function openContextDrawer(title, agent, desc) {
+  document.getElementById('context-title').innerText = title;
+  document.getElementById('context-agent').innerText = 'Agent: ' + agent;
+  if (desc) document.getElementById('context-desc').innerText = desc;
+  document.getElementById('context-drawer-backdrop').classList.add('open');
+}
+
+function closeContextDrawer(e) {
+  document.getElementById('context-drawer-backdrop').classList.remove('open');
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeContextDrawer();
+});
+</script>
+</body>
+</html>
