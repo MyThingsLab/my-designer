@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyThingsLab · CAD Operative Control Plane</title>
+<style>
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+  --bg-page: #F8F9FA;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #F1F3F5;
+  --bg-surface-elevated: #FFFFFF;
+  --border-subtle: #D0D7DE;
+  --border-strong: #8C959F;
+
+  --text-primary: #1F2328;
+  --text-secondary: #59636E;
+  --text-muted: #656D76;
+
+  --accent-primary: #0969DA;
+  --accent-surface: #DDF4FF;
+  --accent-border: #54AEFF;
+  --accent-text: #0550AE;
+
+  --good: #1A7F37;
+  --good-bg: #E6F2EA;
+  --good-border: #4CC26B;
+  --good-solid: #1A7F37;
+
+  --warn: #9A6700;
+  --warn-bg: #F5EEDC;
+  --warn-border: #D9A83C;
+  --warn-solid: #9A6700;
+
+  --crit: #CF222E;
+  --crit-bg: #FBE9EB;
+  --crit-border: #F27D8A;
+  --crit-solid: #CF222E;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-full: 9999px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-page: #0D1117;
+    --bg-surface: #161B22;
+    --bg-surface-subtle: #21262D;
+    --bg-surface-elevated: #30363D;
+    --border-subtle: #30363D;
+    --border-strong: #484F58;
+
+    --text-primary: #E6EDF3;
+    --text-secondary: #8D96A0;
+    --text-muted: #6E7681;
+
+    --accent-primary: #2F81F7;
+    --accent-surface: #051D42;
+    --accent-border: #1F6FEB;
+    --accent-text: #58A6FF;
+
+    --good: #3FB950;
+    --good-bg: #1B2E22;
+    --good-border: #238636;
+    --good-solid: #3FB950;
+
+    --warn: #D29922;
+    --warn-bg: #2F2818;
+    --warn-border: #9E6A03;
+    --warn-solid: #D29922;
+
+    --crit: #F85149;
+    --crit-bg: #331D20;
+    --crit-border: #DA3633;
+    --crit-solid: #F85149;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.7);
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 4rem;
+}
+
+/* Formal Header & Tabs */
+header.masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 1rem;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+}
+h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; }
+.banner-info { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  background: var(--good-bg);
+  color: var(--good);
+  border: 1px solid var(--good-border);
+}
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--good);
+}
+
+/* Formal Navigation Tabs */
+nav.nav-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.5rem;
+}
+.tab-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  transition: all 0.12s ease;
+}
+.tab-link:hover {
+  background: var(--bg-surface-subtle);
+  color: var(--text-primary);
+}
+.tab-link.active {
+  background: var(--bg-surface);
+  color: var(--accent-text);
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+.tab-badge {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  background: var(--bg-surface-subtle);
+  padding: 0.05rem 0.4rem;
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+}
+.tab-badge.alert {
+  background: var(--crit-bg);
+  color: var(--crit);
+  font-weight: 700;
+}
+
+/* Page Containers */
+.page-view { display: none; }
+.page-view.active { display: block; }
+
+/* Formal Telemetry HUD */
+.hud-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+.hud-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.9rem 1.1rem;
+  box-shadow: var(--shadow-sm);
+}
+.hud-card .label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+.hud-card .value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.hud-card .value {
+  font-size: 1.55rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+.hud-card .subtext {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.pill {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+.pill.good { background: var(--good-bg); color: var(--good); border-color: var(--good-border); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-border); }
+.pill.crit { background: var(--crit-bg); color: var(--crit); border-color: var(--crit-border); }
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 1.75rem 0 0.85rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.35rem;
+}
+.section-head h2 { font-size: 1.05rem; font-weight: 700; }
+.section-head p { font-size: 0.8rem; color: var(--text-muted); }
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1.15rem;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Formal ASK Gating Card */
+.ask-alert-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--warn-border);
+  border-left: 4px solid var(--warn);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+.ask-info { display: flex; flex-direction: column; gap: 0.2rem; }
+.ask-badge {
+  font-size: 0.68rem; font-weight: 700; font-family: var(--font-mono);
+  padding: 0.1rem 0.4rem; border-radius: var(--radius-sm); background: var(--warn); color: #FFF;
+}
+.ask-payload {
+  font-family: var(--font-mono); font-size: 0.76rem;
+  background: var(--bg-surface-subtle); padding: 0.1rem 0.35rem;
+  border: 1px solid var(--border-subtle); border-radius: 3px;
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 600; padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);
+  cursor: pointer; transition: all 0.12s ease;
+}
+.btn-primary { background: var(--accent-primary); color: #FFF; border-color: var(--accent-primary); }
+.btn-success { background: var(--good-bg); color: var(--good); border-color: var(--good-border); }
+.btn-danger { background: var(--crit-bg); color: var(--crit); border-color: var(--crit-border); }
+.btn:hover { filter: brightness(0.96); }
+
+/* Data Tables */
+table.data-table {
+  width: 100%; border-collapse: collapse; background: var(--bg-surface);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+table.data-table th {
+  background: var(--bg-surface-subtle); font-size: 0.72rem; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-muted); text-align: left;
+  padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--border-subtle);
+}
+table.data-table td {
+  padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.84rem;
+}
+table.data-table tr:last-child td { border-bottom: none; }
+table.data-table tr:hover { background: var(--bg-surface-subtle); }
+
+/* Goal Focus Layout */
+.goal-hero-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.milestones-list {
+  list-style: none; display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.65rem;
+}
+.milestone-item {
+  display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.82rem;
+  font-family: var(--font-mono);
+}
+.milestone-item.checked { color: var(--good); font-weight: 600; }
+.milestone-item.pending { color: var(--text-secondary); }
+
+/* LLM Queue Layout */
+.pipeline-belt {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
+}
+.belt-stage {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 240px;
+}
+.belt-stage.active-stage {
+  border-color: var(--accent-border);
+  background: linear-gradient(to bottom, var(--accent-surface), var(--bg-surface));
+}
+.stage-head {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-muted);
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.35rem;
+}
+.queue-card {
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.65rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  transition: border-color 0.12s ease, transform 0.12s ease;
+}
+.queue-card:hover {
+  border-color: var(--accent-primary);
+  transform: translateY(-1px);
+}
+
+/* Context Inspector Drawer */
+.drawer-backdrop {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px); z-index: 100; opacity: 0; pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+.drawer-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 100%; max-width: 580px;
+  background: var(--bg-surface); box-shadow: var(--shadow-lg); z-index: 101;
+  transform: translateX(100%); transition: transform 0.2s ease;
+  display: flex; flex-direction: column;
+}
+.drawer-backdrop.open .drawer-panel { transform: translateX(0); }
+.drawer-head {
+  padding: 1.1rem 1.3rem; border-bottom: 1px solid var(--border-subtle);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.drawer-content { padding: 1.3rem; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 1rem; }
+.context-box {
+  background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm); padding: 0.85rem; font-family: var(--font-mono);
+  font-size: 0.76rem; line-height: 1.45; white-space: pre-wrap; color: var(--text-primary);
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Formal Top Masthead -->
+  <header class="masthead">
+    <div>
+      <div class="eyebrow">MyThingsLab · CAD Operative Control Plane</div>
+      <h1>Workstation Fleet Console</h1>
+      <p class="banner-info">Continuous Autonomous Development Loop · Snapshot 2026-09-17T17:30Z</p>
+    </div>
+    <div class="status-pill">
+      <span class="status-dot"></span>
+      <span>CAD ACTIVE · ITERATION #152</span>
+    </div>
+  </header>
+
+  <!-- Formal Navigation Tabs -->
+  <nav class="nav-tabs">
+    <button class="tab-link active" onclick="switchPage('overview', this)">Overview</button>
+    <button class="tab-link" onclick="switchPage('goal', this)">Goal Focus <span class="tab-badge">cad-foundation</span></button>
+    <button class="tab-link" onclick="switchPage('queue', this)">LLM Queue <span class="tab-badge">4 In-Flight</span></button>
+    <button class="tab-link" onclick="switchPage('graph', this)">Graph</button>
+    <button class="tab-link" onclick="switchPage('repos', this)">Repos <span class="tab-badge">37</span></button>
+    <button class="tab-link" onclick="switchPage('asks', this)">Decisions <span class="tab-badge alert">1 Pending</span></button>
+  </nav>
+
+  <!-- PAGE 1: OVERVIEW -->
+  <div id="page-overview" class="page-view active">
+    <div class="hud-grid">
+      <div class="hud-card">
+        <div class="label">Fleet CI Status</div>
+        <div class="value-row">
+          <div class="value">37/37</div>
+          <span class="pill good">100% Green</span>
+        </div>
+        <div class="subtext">0 failing on main · 37 repos verified</div>
+      </div>
+      <div class="hud-card">
+        <div class="label">Active Goal Target</div>
+        <div class="value-row">
+          <div class="value">75%</div>
+          <span class="pill good">goal/cad-foundation</span>
+        </div>
+        <div class="subtext">12 of 16 issues closed</div>
+      </div>
+      <div class="hud-card">
+        <div class="label">Deterministic Pre-Flight</div>
+        <div class="value-row">
+          <div class="value">4 Tasks</div>
+          <span class="pill good">0 Tokens Wasted</span>
+        </div>
+        <div class="subtext">AST introspection &amp; diff verification</div>
+      </div>
+      <div class="hud-card">
+        <div class="label">Decisions &amp; Safety Gate</div>
+        <div class="value-row">
+          <div class="value">1 Pending</div>
+          <span class="pill crit">Action Required</span>
+        </div>
+        <div class="subtext">Blocking operator decision</div>
+      </div>
+    </div>
+
+    <!-- Active Human Decision Card -->
+    <div class="ask-alert-card">
+      <div class="ask-info">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span class="ask-badge">ASK REQUIRED</span>
+          <strong style="font-size: 0.92rem;">my-coder requests branch push to origin</strong>
+          <span class="mono" style="font-size: 0.74rem; color: var(--text-muted);">24s remaining</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+          Tool <strong class="mono">my-coder</strong> pushing <span class="ask-payload">mycoder/deps-parser</span> on <strong class="mono">my-things-core</strong>.
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-success" onclick="alert('Decision ALLOW recorded.')">Allow Action</button>
+        <button class="btn btn-danger" onclick="alert('Decision DENY recorded.')">Deny</button>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <h2>Recent Fleet Operations</h2>
+      <p>Continuous autonomous development dispatches and verified merge PRs</p>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Repository</th><th>Shelf</th><th>CI Health</th><th>Open Issues</th><th>In-Flight PRs</th><th>Last Activity</th></tr></thead>
+      <tbody>
+        <tr><td class="mono"><strong>my-things-core</strong></td><td>dev-harness</td><td><span class="pill good">CI ok</span></td><td class="mono">2</td><td class="mono">1</td><td class="mono">12m ago</td></tr>
+        <tr><td class="mono"><strong>my-dashboard</strong></td><td>services</td><td><span class="pill good">CI ok</span></td><td class="mono">1</td><td class="mono">1</td><td class="mono">24m ago</td></tr>
+        <tr><td class="mono"><strong>my-designer</strong></td><td>dev-harness</td><td><span class="pill good">CI ok</span></td><td class="mono">0</td><td class="mono">1</td><td class="mono">3m ago</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGE 2: GOAL FOCUS -->
+  <div id="page-goal" class="page-view">
+    <div class="goal-hero-grid">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="pill good mono">● STRATEGIC GOAL FOCUS</span>
+          <span class="mono" style="font-size: 0.76rem; color: var(--text-muted);">MILESTONE: #14</span>
+        </div>
+        <h2 style="font-size: 1.35rem; margin: 0.5rem 0 0.25rem;">goal/cad-foundation</h2>
+        <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;">
+          Establish the unified continuous autonomous development loop: deterministic dependency graph parsing, non-blocking live dashboard serve, and in-page human-in-the-loop decision gating.
+        </p>
+        <div style="margin-top: 1.15rem;">
+          <h4 style="font-size: 0.74rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.06em;">Verifiable Done-When Checklist</h4>
+          <ul class="milestones-list">
+            <li class="milestone-item checked">[✓] 1. Dependency graph parses <code>blocked_by:</code> and <code>depends on</code> cross-repo.</li>
+            <li class="milestone-item checked">[✓] 2. <code>mydashboard serve</code> daemon runs background refresh with 127.0.0.1 default.</li>
+            <li class="milestone-item checked">[✓] 3. <code>my-designer</code> delivers high-signal operative workstation prototypes.</li>
+            <li class="milestone-item pending">[○] 4. Full ASK Allow/Deny round-trip verified between live UI and <code>myguard.ask</code>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="background: var(--bg-surface-subtle); display: flex; flex-direction: column; gap: 1.1rem;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="font-size: 0.82rem; font-weight: 600;">Milestone Progress</span>
+            <span class="mono" style="font-size: 1.35rem; font-weight: 700;">12 / 16 <span style="font-size: 0.8rem; font-weight: 400; color: var(--text-muted);">Tasks</span></span>
+          </div>
+          <div style="width: 100%; height: 6px; background: var(--border-subtle); border-radius: var(--radius-full); overflow: hidden; margin-top: 0.4rem;">
+            <div style="width: 75%; height: 100%; background: var(--good-solid);"></div>
+          </div>
+        </div>
+        <div>
+          <h4 style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Participating Repositories (4)</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+            <span class="pill mono">my-things-core (4/5)</span>
+            <span class="pill mono">my-dashboard (4/5)</span>
+            <span class="pill mono">my-designer (2/3)</span>
+            <span class="pill mono">my-guard (2/3)</span>
+          </div>
+        </div>
+        <div style="margin-top: auto;">
+          <button class="btn btn-primary" style="width: 100%;" onclick="alert('Syncing goal milestone state with GitHub...')">Sync Milestone Status</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 3: LLM QUEUE -->
+  <div id="page-queue" class="page-view">
+    <div class="section-head" style="margin-top: 0;">
+      <div>
+        <h2>Deterministic LLM Dispatch Pipeline</h2>
+        <p>Pre-optimizing task context deterministically before token dispatch · Spend tripwire protection</p>
+      </div>
+      <button class="btn btn-primary" onclick="alert('Step dispatching next task in queue...')">Step Dispatch</button>
+    </div>
+
+    <div class="pipeline-belt">
+      <!-- 1. Context Prep -->
+      <div class="belt-stage">
+        <div class="stage-head"><span>1. Context Prep</span><span class="tab-badge">2</span></div>
+        <div class="queue-card" onclick="openDrawer('core#105: Context Prep', 'my-guide', 'AST introspection &amp; contract verification')">
+          <div style="display: flex; justify-content: space-between;"><span class="pill mono">my-guide</span><span class="pill crit mono">P0</span></div>
+          <div class="mono" style="font-weight: 700;">core#105</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">Assembling ASTs (0 tokens)</div>
+        </div>
+      </div>
+
+      <!-- 2. LLM Queue -->
+      <div class="belt-stage active-stage">
+        <div class="stage-head" style="color: var(--accent-text);"><span>2. LLM Queue</span><span class="tab-badge">1</span></div>
+        <div class="queue-card" style="border-color: var(--accent-primary);" onclick="openDrawer('dashboard#17: LLM Dispatch', 'my-coder', 'Implement ASK in-page server handler')">
+          <div style="display: flex; justify-content: space-between;"><span class="pill mono" style="background: var(--accent-surface); color: var(--accent-text);">my-coder</span><span class="pill warn mono">P1</span></div>
+          <div class="mono" style="font-weight: 700;">dashboard#17</div>
+          <div style="font-size: 0.72rem; color: var(--accent-text);">Ready · Est. 1.2k tokens</div>
+        </div>
+      </div>
+
+      <!-- 3. Inference -->
+      <div class="belt-stage">
+        <div class="stage-head"><span>3. Inference</span><span class="tab-badge">1</span></div>
+        <div class="queue-card" style="border-left: 3px solid var(--accent-primary);" onclick="openDrawer('study#29: Inference Stream', 'my-researcher', 'Physics study brief generation')">
+          <div style="display: flex; justify-content: space-between;"><span class="pill mono" style="background: var(--accent-surface); color: var(--accent-text);">my-researcher</span><span class="mono" style="font-size: 0.68rem; color: var(--accent-text);">STREAM</span></div>
+          <div class="mono" style="font-weight: 700;">study#29</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">840/1200 tokens</div>
+        </div>
+      </div>
+
+      <!-- 4. Policy Gate -->
+      <div class="belt-stage">
+        <div class="stage-head"><span>4. Policy Gate</span><span class="tab-badge">1</span></div>
+        <div class="queue-card" style="border-left: 3px solid var(--warn-solid);" onclick="openDrawer('guard#12: Policy Evaluation', 'my-guard', 'Policy gate check on git push')">
+          <div style="display: flex; justify-content: space-between;"><span class="pill mono">my-guard</span><span class="pill warn mono">ASK</span></div>
+          <div class="mono" style="font-weight: 700;">guard#12</div>
+          <div style="font-size: 0.72rem; color: var(--warn);">Operator approval required</div>
+        </div>
+      </div>
+
+      <!-- 5. Verify & Draft -->
+      <div class="belt-stage">
+        <div class="stage-head"><span>5. Verify &amp; Draft</span><span class="tab-badge">1</span></div>
+        <div class="queue-card" style="border-left: 3px solid var(--good-solid);" onclick="openDrawer('designer#7: Verify &amp; PR', 'my-designer', 'PR draft creation &amp; pytest')">
+          <div style="display: flex; justify-content: space-between;"><span class="pill mono">my-designer</span><span class="pill good mono">PASS</span></div>
+          <div class="mono" style="font-weight: 700;">designer#7</div>
+          <div style="font-size: 0.72rem; color: var(--good);">18/18 tests green</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 4: GRAPH -->
+  <div id="page-graph" class="page-view">
+    <div class="section-head" style="margin-top: 0;">
+      <div>
+        <h2>Topological Dependency &amp; Workflow Graph</h2>
+        <p>Interactive DAG of cross-repo issue blockers and declared pipeline triggers</p>
+      </div>
+    </div>
+    <div class="card" style="overflow-x: auto;">
+      <svg viewBox="0 0 900 200" style="width: 100%; min-width: 800px; height: 200px;">
+        <path d="M 160 60 L 280 60" stroke="var(--border-strong)" stroke-width="1.5" marker-end="url(#arrow)" />
+        <path d="M 440 60 L 560 60" stroke="var(--border-strong)" stroke-width="1.5" marker-end="url(#arrow)" />
+        <path d="M 720 60 L 820 60" stroke="var(--border-strong)" stroke-width="1.5" marker-end="url(#arrow)" />
+
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--border-strong)"/>
+          </marker>
+        </defs>
+
+        <g transform="translate(30, 30)" class="mono">
+          <rect width="130" height="60" rx="4" fill="var(--bg-surface)" stroke="var(--good-solid)" stroke-width="2" />
+          <text x="12" y="26" font-size="12" font-weight="700">core#105</text>
+          <text x="12" y="46" font-size="10" fill="var(--good)">● READY</text>
+        </g>
+        <g transform="translate(280, 30)" class="mono">
+          <rect width="160" height="60" rx="4" fill="var(--bg-surface)" stroke="var(--accent-primary)" stroke-width="2" />
+          <text x="12" y="26" font-size="12" font-weight="700">pipeline#4</text>
+          <text x="12" y="46" font-size="10" fill="var(--accent-text)">⚡ ACTIVE</text>
+        </g>
+        <g transform="translate(560, 30)" class="mono">
+          <rect width="160" height="60" rx="4" fill="var(--bg-surface)" stroke="var(--border-strong)" stroke-dasharray="4 3" stroke-width="1.5" />
+          <text x="12" y="26" font-size="12" font-weight="700" fill="var(--text-secondary)">dashboard#8</text>
+          <text x="12" y="46" font-size="10" fill="var(--text-muted)">WAITING ON #4</text>
+        </g>
+        <g transform="translate(820, 30)" class="mono">
+          <rect width="130" height="60" rx="4" fill="var(--bg-surface)" stroke="var(--border-subtle)" stroke-width="1.5" />
+          <text x="12" y="26" font-size="12" font-weight="700" fill="var(--text-muted)">conductor#1</text>
+          <text x="12" y="46" font-size="10" fill="var(--text-muted)">QUEUED</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- PAGE 5: REPOS -->
+  <div id="page-repos" class="page-view">
+    <div class="section-head" style="margin-top: 0;">
+      <div>
+        <h2>Fleet Repositories &amp; Shelves</h2>
+        <p>Categorized domain shelves and tool health across 37 repositories</p>
+      </div>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Repo</th><th>Shelf</th><th>CI Status</th><th>Issues</th><th>PRs</th><th>Version</th></tr></thead>
+      <tbody>
+        <tr><td class="mono"><strong>my-things-core</strong></td><td>dev-harness</td><td><span class="pill good">CI ok</span></td><td class="mono">2</td><td class="mono">1</td><td class="mono">v1.7.0</td></tr>
+        <tr><td class="mono"><strong>my-dashboard</strong></td><td>services</td><td><span class="pill good">CI ok</span></td><td class="mono">1</td><td class="mono">1</td><td class="mono">v1.2.0</td></tr>
+        <tr><td class="mono"><strong>my-designer</strong></td><td>dev-harness</td><td><span class="pill good">CI ok</span></td><td class="mono">0</td><td class="mono">1</td><td class="mono">v0.4.0</td></tr>
+        <tr><td class="mono"><strong>my-guard</strong></td><td>services</td><td><span class="pill good">CI ok</span></td><td class="mono">1</td><td class="mono">0</td><td class="mono">v1.1.0</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGE 6: DECISIONS -->
+  <div id="page-asks" class="page-view">
+    <div class="section-head" style="margin-top: 0;">
+      <div>
+        <h2>Human-in-the-Loop Decision Queue</h2>
+        <p>Safety approvals requested by autonomous agents via $MYTHINGS_ASK_CMD</p>
+      </div>
+    </div>
+    <div class="ask-alert-card">
+      <div class="ask-info">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span class="ask-badge">ASK REQUIRED</span>
+          <strong style="font-size: 0.92rem;">my-coder requests branch push to origin</strong>
+          <span class="mono" style="font-size: 0.74rem; color: var(--text-muted);">24s remaining</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+          Tool <strong class="mono">my-coder</strong> pushing <span class="ask-payload">mycoder/deps-parser</span> on <strong class="mono">my-things-core</strong>.
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-success" onclick="alert('Decision ALLOW recorded.')">Allow Action</button>
+        <button class="btn btn-danger" onclick="alert('Decision DENY recorded.')">Deny</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide-Over Context Pack Inspector Drawer -->
+<div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer(event)">
+  <aside class="drawer-panel" onclick="event.stopPropagation()">
+    <div class="drawer-head">
+      <div>
+        <h3 id="drawer-title" style="font-size: 1.05rem; font-weight: 700; font-family: var(--font-mono);">Context Pack</h3>
+        <p id="drawer-agent" style="font-size: 0.76rem; color: var(--accent-text);">Agent: my-coder</p>
+      </div>
+      <button style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted);" onclick="closeDrawer()">&times;</button>
+    </div>
+    <div class="drawer-content">
+      <div>
+        <h4 style="font-size: 0.74rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Task Purpose &amp; Goal Linkage</h4>
+        <p id="drawer-desc" style="font-size: 0.84rem; color: var(--text-secondary);">
+          Engine context contract verification and AST parameter checks.
+        </p>
+      </div>
+
+      <div>
+        <h4 style="font-size: 0.74rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Deterministic Context Pack</h4>
+        <div class="context-box">
+[GOAL CONSTRAINTS]
+- Goal Milestone: goal/cad-foundation
+- Required Gate: 100% test coverage with pytest_plugins
+
+[TARGET REPO & WORKTREE]
+- Repo: MyThingsLab/my-things-core
+- Branch: mycoder/engine-context-105
+- Target Files:
+  * src/mythings/engine.py
+  * src/mythings/deps.py
+  * tests/test_engine.py
+
+[SEAM SIGNATURE]
+- Tool: myguide
+- Single-Engine Prompt: "Verify AST signatures for wish() context parameter"
+- Prework: Deterministic AST parsing (0 tokens spent)
+        </div>
+      </div>
+
+      <div>
+        <button class="btn btn-primary" style="width: 100%;" onclick="alert('Context pack dispatched to agent!')">Dispatch to Agent LLM Stream</button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+function switchPage(pageId, btn) {
+  document.querySelectorAll('.tab-link').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+}
+
+function openDrawer(title, agent, desc) {
+  document.getElementById('drawer-title').innerText = title;
+  document.getElementById('drawer-agent').innerText = 'Agent: ' + agent;
+  if (desc) document.getElementById('drawer-desc').innerText = desc;
+  document.getElementById('drawer-backdrop').classList.add('open');
+}
+
+function closeDrawer(e) {
+  document.getElementById('drawer-backdrop').classList.remove('open');
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeDrawer();
+});
+</script>
+</body>
+</html>
